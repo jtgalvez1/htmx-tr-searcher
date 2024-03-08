@@ -56,13 +56,43 @@ def db_execute(database, sql):
 
 #   return data
 
-def get_most_recents(limit=3, page=0):
+def get_most_recents(limit=5, page=0):
   sql = """
     SELECT
     NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT, ID
     FROM PDF
     ORDER BY ID DESC LIMIT {} OFFSET {}
 """.format(limit, page*limit)
+
+  start_time = time()
+  data = db_execute('pdf.db', sql)
+  end_time = time()
+
+  pdfs = []
+  if data['error'] is not None:
+    for row in data['rows']:
+      pdfs.append({
+        "pdf_name": row[0],
+        "date"    : format(datetime.fromtimestamp(row[1]), '%d/%m/%Y'),
+        "title"   : row[2],
+        "authors" : row[3],
+        "year"    : row[4],
+        "month"   : row[5],
+        "abstract": row[6],
+        "id"      : row[7],
+        "score"   : 0
+      })
+
+  return pdfs, end_time - start_time
+
+def get_pdfs_from_list(pdf_list, limit=5, page=0):
+  sql = """
+    SELECT
+    NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT, ID
+    FROM PDF
+    WHERE ID IN ({})
+    ORDER BY ID DESC LIMIT {} OFFSET {}
+""".format(pdf_list[1:-1], limit, page*limit)
 
   start_time = time()
   data = db_execute('pdf.db', sql)

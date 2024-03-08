@@ -28,9 +28,19 @@
         >
           Home
         </a>
-        <a class="p-6" href="/favorites">Favorites</a>
-        <a class="p-6" href="/history">History</a>
-        <a class="p-6" href="/logout">Logout</a>
+        <a 
+          class="p-6 cursor-pointer" 
+          hx-get="/favorites"
+          hx-target="#pdfs"
+        >
+          Favorites
+        </a>
+        <a 
+          class="p-6 cursor-pointer"
+          hx-get="/history"
+          hx-target="#pdfs"
+        >History</a>
+        <a class="p-6 cursor-pointer" href="/logout">Logout</a>
       </nav>
     {% else %}
       <!-- 'Sign in with Google' button -->
@@ -51,15 +61,15 @@
     {% endif %}
   </header>
   <main id="main" class="p-8 px-48">
+    <form 
+      class="flex"
+      hx-get="/search"
+      hx-target="#pdfs"
+    >
+      <input class="px-4 py-2 border border-black flex-grow" type="text" name="s" placeholder="Maximum of 5 words" required />
+      <input class="px-4 py-2 border border-black cursor-pointer" type="submit" value="Search" />
+    </form>
     <div id="pdfs">
-      <form 
-        class="flex"
-        hx-get="/search"
-        hx-target="#pdfs"
-      >
-        <input class="px-4 py-2 border border-black flex-grow" type="text" name="s" placeholder="Maximum of 5 words" required />
-        <input class="px-4 py-2 border border-black cursor-pointer" type="submit" value="Search" />
-      </form>
       {% include 'pdfs.html' %}
     </div>
   </main>

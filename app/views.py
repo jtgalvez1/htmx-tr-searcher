@@ -1,8 +1,8 @@
 from flask import render_template, request, session, make_response, redirect
 
 from app import app
-from . controllers import *
-from . oauth import *
+from .controllers import *
+from .oauth import *
 
 @app.route('/')
 def index():
@@ -15,11 +15,12 @@ def index():
     # get_pdfs_from_db(['NAME','AUTHORS','YEAR','MONTH','ABSTRACT'])
 
     if session.get('user'):
-        print(session['user']['saved_trs'].translate({ord(i): None for i in '[]'}))
+        # print(session['user']['saved_trs'].translate({ord(i): None for i in '[]'}))
+        print(session['user'])
         for pdf in pdfs:
             if pdf['id'] in session['user']['saved_trs'].translate({ord(i): None for i in '[]'}).split(','):
                 pdf['favorite'] = True
-        return render_template('index.html', pdfs=pdfs, page=page)
+        return render_template('index.html', pdfs=pdfs, page=page, path='/home')
     else:
         res = make_response(
             render_template(
@@ -27,7 +28,8 @@ def index():
                 pdfs=pdfs,
                 page=page,
                 client_id = app.config['GOOGLE_CLIENT_ID'],
-                oauth_callback_url = app.config['BASE_URL'] + '/callback'
+                oauth_callback_url = app.config['BASE_URL'] + '/callback',
+                path='/home'
             )
         )
         res.headers.set('Referrer-Policy', 'no-referrer-when-downgrade')
@@ -35,25 +37,27 @@ def index():
         return res
 
 @app.route('/home')
+@app.route('/favorites')
+@app.route('/history')
 def home():
     try:
         page = abs(int(request.args.get('p')))
     except:
         page = 0
 
-    pdfs, process_time = get_most_recents(page=page)
+    if request.path == '/favorites':
+        pdfs, process_time = get_pdfs_from_list(session['user']['saved_trs'], page=page)
+    if request.path == '/history':
+        pdfs, process_time = get_pdfs_from_list(session['user']['view_history'], page=page)
+    else:
+        pdfs, process_time = get_most_recents(page=page)
 
     if (session.get('user')):
         for pdf in pdfs:
-            print(pdf)
             if pdf['id'] in session['user']['saved_trs'].translate({ord(i): None for i in '[]'}).split(','):
                 pdf['favorite'] = True
-            
-            print(pdf.get('favorite'))
 
-    return render_template('pdfs.html', pdfs=pdfs, page=page)
-
-
+    return render_template('pdfs.html', pdfs=pdfs, page=page, path=request.path)
 
 #auth routes
 @app.route('/callback', methods=['POST', 'GET'])

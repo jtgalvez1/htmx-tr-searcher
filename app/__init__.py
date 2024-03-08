@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask
 from flask_session import Session
 import json
 
@@ -14,4 +14,4 @@ CLIENT_SECRETS_FILE.close()
 app.config['GOOGLE_API_CLIENT_SECRETS'] = CLIENT_SECRETS['web']
 app.config['GOOGLE_CLIENT_ID'] = CLIENT_SECRETS['web'].get('client_id')
 
-from app import routes
+from app import views
