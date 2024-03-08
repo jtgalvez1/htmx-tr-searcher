@@ -1,0 +1,47 @@
+{% block pdfs %}
+{% if pdfs|length > 0 %}
+  {% for pdf in pdfs %}
+  <div class="p-3">
+    <a 
+    class="text-blue-600 text-xl font-bold hover:text-blue-800 visited:text-purple-600"
+    href="/research_paper/{{ pdf['pdf_name'] }}" 
+    target="_blank"
+    >
+      {{ pdf['title'] }}
+    </a>
+    <p 
+      class="font-bold text-lg" 
+      style="color: var(--forest-green);"
+    >
+      {{ pdf['authors'] }}
+    </p>
+    <p class="mt-2 text-lg">
+      {{ pdf['abstract'] }}
+    </p>
+    <p class="mt-2 text-sm text-gray-600">
+      {% if session.get('user') %}
+        <a 
+          class="text-blue-600 font-bold cursor-pointer hover:text-blue-800 inline-flex gap-1"
+        >
+          {% if pdf['favorite'] == True %}
+            <svg class="h-3" fill='red' xmlns="http://www.w3.org/2000/svg" id="Layer_1" data-name="Layer 1" viewBox="0 0 24 24"><path d="M17.5.917a6.4,6.4,0,0,0-5.5,3.3A6.4,6.4,0,0,0,6.5.917,6.8,6.8,0,0,0,0,7.967c0,6.775,10.956,14.6,11.422,14.932l.578.409.578-.409C13.044,22.569,24,14.742,24,7.967A6.8,6.8,0,0,0,17.5.917Z"/></svg> Remove from Favorites
+          {% else %}
+            <svg class="h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g id="_01_align_center" data-name="01 align center"><path d="M17.5.917a6.4,6.4,0,0,0-5.5,3.3A6.4,6.4,0,0,0,6.5.917,6.8,6.8,0,0,0,0,7.967c0,6.775,10.956,14.6,11.422,14.932l.578.409.578-.409C13.044,22.569,24,14.742,24,7.967A6.8,6.8,0,0,0,17.5.917ZM12,20.846c-3.253-2.43-10-8.4-10-12.879a4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,11,7.967h2a4.8,4.8,0,0,1,4.5-5.05A4.8,4.8,0,0,1,22,7.967C22,12.448,15.253,18.416,12,20.846Z"/></g></svg> Add to Favorites
+          {% endif %}
+        </a>
+        |
+        {% if session.get('user').get('allow_delete') == 1 %}
+        <strong><a class="text-blue-600 font-bold cursor-pointer hover:text-blue-800">DELETE</a></strong>
+        |
+        {% endif %}
+      {% endif %}
+      Published on {{ pdf['month'] }} {{ pdf['year'] }}, <a class="text-blue-600 hover:text-blue-800 visited:text-purple-600" href="/bibtext/{{ pdf['pdf_name'] }}" target="_blank">[BibTeX]</a>
+    </p>
+  </div>
+  <hr>
+  {% endfor %}
+  <div hx-get="/home?p={{page+1}}" hx-trigger="revealed" hx-swap="afterend"></div>
+{% else %}
+  <h1 class="text-xl pt-2">No more results.</h1>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,6 @@
+venv/
+flask_session/
+client_secret.json
+.vscode/
+app/sql/*.db
+app/__pycache__
