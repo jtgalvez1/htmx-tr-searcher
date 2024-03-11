@@ -31,7 +31,7 @@ def db_execute(database, sql):
 
   return data
 
-# def get_pdfs_from_db(fields,limit=5,page=0):
+# def get_pdfs_from_db(fields,pdf_list=None,limit=5,page=0):
 #   data = {
 #     'rows': [],
 #   }
@@ -135,7 +135,7 @@ def get_user_by_id(userid):
 
     return user
   
-  return 'Cannot login'
+  return data['error']
 
 def upsert_user(credentials):
   sql = """
@@ -155,3 +155,9 @@ def upsert_user(credentials):
     )
   db_execute('users.db',sql)
   return get_user_by_id(credentials.get('userid'))
+
+def toggle_favorite(userid, saved_trs):
+  # lambda function turns saved_trs from list of str ['x','y','z'] to list of int [x,y,z]
+  sql = "UPDATE users SET saved_trs = '{saved_trs}' WHERE userid = '{userid}'".format(saved_trs = list(map(lambda x : int(x), saved_trs)), userid = userid)
+  db_execute('users.db',sql)
+  return get_user_by_id(userid)
