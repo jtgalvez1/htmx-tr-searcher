@@ -1,0 +1,28 @@
+<div class="m-4">
+    <h1 
+        class="text-2xl"
+        style="color: var(--up-maroon);"
+    >
+        {{ pdf['title'] }}
+    </h1>
+    <h3 
+        class="text-xl"
+        style="color: var(--forest-green);"
+    >
+        {{ pdf['authors'] }}
+    </h3>
+    <span>Published on {{ pdf['month'] }} {{ pdf['year'] }}</span>
+    <p class="my-2">{{ pdf['abstract'] }}</p>
+    <div>
+        Keywords: 
+        {% for keyword in pdf['index_terms'].strip('][').split(', ') %}
+            <button 
+                class="px-2 underline"
+                hx-get="/search?q={{ keyword }}"
+                hx-target="#pdfs"
+            >
+                {{ keyword }}
+            </button>
+        {% endfor %}
+    </div>
+</div>

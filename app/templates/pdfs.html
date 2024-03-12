@@ -4,8 +4,9 @@
   <div class="p-3">
     <a 
     class="text-blue-600 text-xl font-bold hover:text-blue-800 visited:text-purple-600"
-    href="/research_paper/{{ pdf['pdf_name'] }}" 
-    target="_blank"
+    hx-get="/research_paper/{{ pdf['pdf_name'] }}" 
+    hx-target="#pdfs"
+    {# target="_blank" #}
     >
       {{ pdf['title'] }}
     </a>

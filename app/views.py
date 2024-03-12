@@ -1,4 +1,4 @@
-from flask import render_template, request, session, make_response, redirect, abort
+from flask import render_template, request, session, make_response, redirect, redirect
 
 from app import app
 from .controllers import *
@@ -11,7 +11,12 @@ def index():
     except:
         page = 0
 
-    results, process_time = get_most_recents()
+    if request.path == '/favorites':
+        results, process_time = get_pdfs_from_list(session['user']['saved_trs'], page=page)
+    elif request.path == '/history':
+        results, process_time = get_pdfs_from_list(session['user']['view_history'], page=page)
+    else:
+        results, process_time = get_most_recents(page=page)
     # get_pdfs_from_db(['NAME','AUTHORS','YEAR','MONTH','ABSTRACT'])
 
     if session.get('user'):
@@ -68,6 +73,44 @@ def home():
         pdfs = results
 
     return render_template('pdfs.html', pdfs=pdfs, page=page, path=request.path)
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q')
+
+    print(query)
+
+    if not query:
+        redirect('/')
+
+    try:
+        page = abs(int(request.args.get('p')))
+    except:
+        page = 0
+
+    query = query.lower()
+    words = query.split()[:5] # max 5 words for querying
+
+    query = " ".join(words)
+
+    print(query)
+
+    return ""
+
+
+@app.route('/research_paper/<pdfname>', methods=['GET'])
+def research_paper(pdfname):
+    result = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],filter={ 'column' : 'NAME', 'value' : pdfname})
+    pdf = result[0]
+
+    if (session.get('user')):
+        view_history = session['user']['view_history'].strip('][').split(', ')
+        if str(pdf['id']) in view_history:
+            view_history.remove(str(pdf['id']))
+        view_history.append(str(pdf['id']))
+        session['user'] = update_view_history(session['userid'], view_history)
+
+    return render_template('pdf.html', pdf=pdf)
 
 
 

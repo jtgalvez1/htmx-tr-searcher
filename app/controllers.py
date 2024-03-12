@@ -8,7 +8,8 @@ from app import app
 
 def db_execute(database, sql):
   data = {
-    'rows': []
+    'error': None,
+    'rows': [],
   }
 
   try:
@@ -31,30 +32,40 @@ def db_execute(database, sql):
 
   return data
 
-# def get_pdfs_from_db(fields,pdf_list=None,limit=5,page=0):
-#   data = {
-#     'rows': [],
-#   }
+def get_pdfs_from_db(fields,filter=None,pdf_list=None,limit=5,page=0):
+  sql = f"SELECT {', '.join(fields)} FROM pdf"
+  if filter is not None:
+    sql = sql + f" WHERE {filter['column']} = '{filter['value']}'"
   
-#   try:
-#     with sqlite3.connect(app.config['DB_PATH'] + 'pdf.db') as conn:
-#       cursor = conn.execute(f'SELECT {('?,' * len(fields))[:-1]}, ID FROM PDF ORDER BY ID DESC LIMIT {limit} OFFSET {page}', fields)
+  data = db_execute('pdf.db', sql)
+
+  pdfs = []
+  if data['error'] is not None:
+    for row in data['rows']:
+      pdf = {}
+      for i in range(0,len(fields)):
+        pdf[fields[i].lower()] = row[i]
+      pdfs.append(pdf)
+
+  # try:
+  #   with sqlite3.connect(app.config['DB_PATH'] + 'pdf.db') as conn:
+  #     cursor = conn.execute(f'SELECT {('?,' * len(fields))[:-1]}, ID FROM PDF ORDER BY ID DESC LIMIT {limit} OFFSET {page}', fields)
       
-#       if cursor.rowcount < 1:
-#         data['error'] = 'No results found.'
+  #     if cursor.rowcount < 1:
+  #       data['error'] = 'No results found.'
 
-#       for row in cursor:
-#         data['rows'].append(row)
+  #     for row in cursor:
+  #       data['rows'].append(row)
 
-#       conn.commit()
-#   except sqlite3.Error as e:
-#     conn.rollback()
-#     print(e)
-#     data['error'] = e
-#   finally:
-#     conn.close()
+  #     conn.commit()
+  # except sqlite3.Error as e:
+  #   conn.rollback()
+  #   print(e)
+  #   data['error'] = e
+  # finally:
+  #   conn.close()
 
-#   return data
+  return pdfs
 
 def get_most_recents(limit=5, page=0):
   sql = """
@@ -86,13 +97,21 @@ def get_most_recents(limit=5, page=0):
   return pdfs, end_time - start_time
 
 def get_pdfs_from_list(pdf_list, limit=5, page=0):
+
+  # ORDER BY CASE so result will be in the same order of the list
+  i = 1
+  when_case = ""
+  for id in pdf_list.strip('][').split(', '):
+    when_case = when_case + f" WHEN  {id} THEN {i} "
+    i += 1
+
   sql = """
     SELECT
     NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT, ID
     FROM PDF
     WHERE ID IN ({})
-    ORDER BY ID DESC LIMIT {} OFFSET {}
-""".format(pdf_list[1:-1], limit, page*limit)
+    ORDER BY CASE ID {} END DESC LIMIT {} OFFSET {}
+""".format(pdf_list[1:-1], when_case, limit, page*limit)
 
   start_time = time()
   data = db_execute('pdf.db', sql)
@@ -159,5 +178,11 @@ def upsert_user(credentials):
 def toggle_favorite(userid, saved_trs):
   # lambda function turns saved_trs from list of str ['x','y','z'] to list of int [x,y,z]
   sql = "UPDATE users SET saved_trs = '{saved_trs}' WHERE userid = '{userid}'".format(saved_trs = list(map(lambda x : int(x), saved_trs)), userid = userid)
+  db_execute('users.db',sql)
+  return get_user_by_id(userid)
+
+def update_view_history(userid, view_history):
+  # lambda function turns saved_trs from list of str ['x','y','z'] to list of int [x,y,z]
+  sql = "UPDATE users SET view_history = '{view_history}' WHERE userid = '{userid}'".format(view_history = list(map(lambda x : int(x), view_history)), userid = userid)
   db_execute('users.db',sql)
   return get_user_by_id(userid)
