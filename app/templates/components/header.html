@@ -1,0 +1,95 @@
+<header 
+    class="
+        w-screen 
+        h-20 
+        flex
+        flex-col
+        lg:flex-row
+        justify-around
+        items-center 
+        shadow-lg
+        relative"
+>
+    <div class="w-screen lg:max-w-max px-4 flex justify-between items-center">
+        <h3 class="max-w-max  text-2xl lg:text-4xl font-bold">
+            <a 
+            style="color: var(--up-maroon);"
+            href="/" 
+            >
+            UPLB ICS Peak One
+            </a>
+        </h3>
+        <!-- <button id="menu-btn" onclick="document.querySelector('#sidebar').style.left = '0';"> -->
+        {%if session['user'] %}
+        <svg 
+            class="h-12 lg:hidden"
+            onclick="document.querySelector('#navbar').classList.toggle('hidden');"
+            viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+            <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+            <g id="SVGRepo_iconCarrier"> 
+                <path d="M5 7H19" stroke="#cdcdcd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
+                <path d="M5 12L19 12" stroke="#cdcdcd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
+                <path d="M5 17L19 17" stroke="#cdcdcd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path> 
+            </g>
+        </svg>
+        {% endif %}
+        <!-- </button> -->
+    </div>
+    {% if session['user'] %}
+      <nav 
+        id="navbar"
+        class="
+            max-w-max
+            bg-white
+            flex 
+            flex-col
+            lg:flex-row
+            items-center
+            absolute
+            top-20
+            lg:static
+            hidden
+            lg:block
+            shadow-lg
+            lg:shadow-none
+    ">
+        <a 
+          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" 
+          hx-get="/home"
+          hx-target="#pdfs"
+        >
+          Home
+        </a>
+        <a 
+          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" 
+          hx-get="/favorites"
+          hx-target="#pdfs"
+        >
+          Favorites
+        </a>
+        <a 
+          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0"
+          hx-get="/history"
+          hx-target="#pdfs"
+        >History</a>
+        <a class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" href="/logout">Logout</a>
+      </nav>
+    {% else %}
+      <!-- 'Sign in with Google' button -->
+      <script src="https://accounts.google.com/gsi/client" async defer></script>
+      <div id="g_id_onload"
+        data-client_id="{{ client_id }}"
+        data-login_uri="{{ oauth_callback_url }}"
+        data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+        data-type="standard"
+        data-size="large"
+        data-theme="outline"
+        data-text="sign_in_with"
+        data-shape="rectangular"
+        data-logo_alignment="left">
+      </div>
+    {% endif %}
+  </header>

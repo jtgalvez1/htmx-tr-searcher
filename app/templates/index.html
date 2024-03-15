@@ -10,57 +10,8 @@
   <title>UPLB ICS PeakOne</title>
 </head>
 <body class="min-h-screen flex flex-col">
-  <header class="w-screen h-20 flex justify-around items-center shadow-lg">
-    <h3 class="max-w-max text-4xl font-bold">
-      <a 
-        style="color: var(--up-maroon);"
-        href="/" 
-      >
-        UPLB ICS Peak One
-      </a>
-    </h3>
-    {% if session['user'] %}
-      <nav class="max-w-max flex items-center">
-        <a 
-          class="p-6 cursor-pointer" 
-          hx-get="/home"
-          hx-target="#pdfs"
-        >
-          Home
-        </a>
-        <a 
-          class="p-6 cursor-pointer" 
-          hx-get="/favorites"
-          hx-target="#pdfs"
-        >
-          Favorites
-        </a>
-        <a 
-          class="p-6 cursor-pointer"
-          hx-get="/history"
-          hx-target="#pdfs"
-        >History</a>
-        <a class="p-6 cursor-pointer" href="/logout">Logout</a>
-      </nav>
-    {% else %}
-      <!-- 'Sign in with Google' button -->
-      <script src="https://accounts.google.com/gsi/client" async defer></script>
-      <div id="g_id_onload"
-        data-client_id="{{ client_id }}"
-        data-login_uri="{{ oauth_callback_url }}"
-        data-auto_prompt="false">
-      </div>
-      <div class="g_id_signin"
-        data-type="standard"
-        data-size="large"
-        data-theme="outline"
-        data-text="sign_in_with"
-        data-shape="rectangular"
-        data-logo_alignment="left">
-      </div>
-    {% endif %}
-  </header>
-  <main id="main" class="p-8 px-48">
+  {% include 'components/header.html' %}
+  <main id="main" class="p-8 lg:px-48">
     <form 
       class="flex"
       hx-get="/search"
@@ -73,21 +24,6 @@
       {% include 'pdfs.html' %}
     </div>
   </main>
-  <footer class="w-screen mt-auto p-2 px-32 pt-8 bg-gray-700 text-gray-100 grid grid-cols-3 gap-2">
-    <div>
-      <h3>Institute of Computer Science</h3> <br>
-      1F Wing C, Francisco O. Santos Hall (formerly Physical Sciences Building), <br>
-      Harold Cuzner Avenue, University of the Philippines Los Baños, <br>
-      College, Los Baños, Laguna 4031 Philippines 
-    </div>
-    <div>
-      <strong>Terms of Use</strong>: This service provides copyrighted materials. At least one of the authors authorized the use of their 
-        technical report under 'fair use' (Section 185,  <a href="https://www.officialgazette.gov.ph/1997/06/06/republic-act-no-8293/">R.A. 8293</a>) and thus made available here. Strictly for educational and non-commercial use only. Please do not upload the reports to other platforms.
-    </div>
-    <div>
-      <strong>Privacy Policy</strong>: This service uses your UP email account for authentication. By using this service, you authorize the service provider to store your <i>email address, name, and picture</i> from your UP email account. This service abides to the provisions in  <a href="https://www.officialgazette.gov.ph/2012/08/15/republic-act-no-10173/">R.A. 10173</a>. 
-    </div>
-    <div class="text-center col-span-3">&#169; 2023 Powered by <a href="https://github.com/srg-ics-uplb/srg-tr-searcher">SRG-ICS-UPLB</a></div>
-  </footer>
+  {% include 'components/footer.html' %}
 </body>
 </html>
