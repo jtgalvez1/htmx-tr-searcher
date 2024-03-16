@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="w-screen">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,20 +7,24 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" type="image/x-icon" href="{{ url_for('static',filename='images/favicon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
-  <title>UPLB ICS PeakOne</title>
+  <title>{{ title }}</title>
 </head>
 <body class="min-h-screen flex flex-col">
   {% include 'components/header.html' %}
   <main id="main" class="p-8 lg:px-48">
     <form 
       class="flex"
-      hx-get="/search"
-      hx-target="#pdfs"
+      action="/search"
+      {# hx-get="/search"
+      hx-target="#pdfs" #}
     >
-      <input class="px-4 py-2 border border-black flex-grow" type="text" name="s" placeholder="Maximum of 5 words" required />
+      <input class="px-4 py-2 border border-black flex-grow" type="text" name="q" placeholder="Maximum of 5 words" required />
       <input class="px-4 py-2 border border-black cursor-pointer" type="submit" value="Search" />
     </form>
     <div id="pdfs">
+      {% if not session.get('user') %}
+        <h1 class="lg:text-xl m-8 my-4 px-4 py-2 bg-red-200 border-2 rounded-md" style="color: var(--up-maroon); border-color: var(--up-maroon)">Must be logged in with UP Mail account to access full PDF</h1>
+      {% endif %}
       {% include 'pdfs.html' %}
     </div>
   </main>

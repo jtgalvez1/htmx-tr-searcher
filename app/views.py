@@ -1,23 +1,59 @@
-from flask import render_template, request, session, make_response, redirect, redirect
+from flask import render_template, request, session, make_response, redirect, redirect, send_from_directory
+import os
 
 from app import app
 from .controllers import *
 from .oauth import *
 
+@app.before_request
+def prereq():
+    print(request.path)
+    USER_REQUIRED = ['/favorites', '/history', '/pdf', '/api']
+    if (session.get('user') is None and request.path.startswith(tuple(USER_REQUIRED))):
+        return redirect('/')
+    pass
+
 @app.route('/')
+@app.route('/home')
+@app.route('/favorites')
+@app.route('/history')
+@app.route('/search')
 def index():
+
+    # initialize for render_template
+    title = "UPLB ICS PeakOne"
+    words = []
+
     try:
         page = abs(int(request.args.get('p')))
     except:
         page = 0
 
+    template = 'index.html'
+    if page > 0:
+        template = 'pdfs.html'
+
+
     if request.path == '/favorites':
-        results, process_time = get_pdfs_from_list(session['user']['saved_trs'], page=page)
+        results, process_time = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],pdf_list=session['user']['saved_trs'], page=page)
+        title = 'Favorites | ' + title
     elif request.path == '/history':
-        results, process_time = get_pdfs_from_list(session['user']['view_history'], page=page)
+        results, process_time = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],pdf_list=session['user']['view_history'], page=page)
+        title = 'View History | ' + title
+    elif request.path == '/search':
+        query = request.args.get('q')
+
+        if not query:
+            redirect('/')
+
+        query = query.lower()
+        words = query.split()[:5] # max 5 words for querying
+
+        results, process_time = get_pdfs_by_words(words,page=page)
+        title = 'Search | ' + title
     else:
-        results, process_time = get_most_recents(page=page)
-    # get_pdfs_from_db(['NAME','AUTHORS','YEAR','MONTH','ABSTRACT'])
+        results, process_time = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],page=page)
+
 
     if session.get('user'):
         pdfs = []
@@ -26,81 +62,54 @@ def index():
                 pdfs.append({ **pdf, 'favorite': True })
             else:
                 pdfs.append({ **pdf, 'favorite': False })
-
-        for pdf in pdfs:
-            if pdf['id'] in session['user']['saved_trs'].translate({ord(i): None for i in '[]'}).split(','):
-                pdf['favorite'] = True
-        return render_template('index.html', pdfs=pdfs, page=page, path='/home')
+    
+        return render_template(
+            template, 
+            pdfs=pdfs, 
+            page=page,
+            title=title, 
+            path=request.path, 
+            query="%20".join(words)
+        )
     else:
         res = make_response(
             render_template(
-                'index.html',
+                template,
                 pdfs=results,
                 page=page,
+                title=title,
+                path=request.path,
+                query="%20".join(words),
                 client_id = app.config['GOOGLE_CLIENT_ID'],
-                oauth_callback_url = app.config['BASE_URL'] + '/callback',
-                path='/home'
+                oauth_callback_url = '/callback'
             )
         )
         res.headers.set('Referrer-Policy', 'no-referrer-when-downgrade')
         res.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
         return res
 
-@app.route('/home')
-@app.route('/favorites')
-@app.route('/history')
-def home():
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q')
     try:
         page = abs(int(request.args.get('p')))
     except:
         page = 0
-
-    if request.path == '/favorites':
-        results, process_time = get_pdfs_from_list(session['user']['saved_trs'], page=page)
-    elif request.path == '/history':
-        results, process_time = get_pdfs_from_list(session['user']['view_history'], page=page)
-    else:
-        results, process_time = get_most_recents(page=page)
-        
-    pdfs = []
-    if (session.get('user')):
-        for pdf in results:
-            if str(pdf['id']) in session['user'].get('saved_trs').strip('][').split(', '):
-                pdfs.append({ **pdf, 'favorite': True })
-            else:
-                pdfs.append({ **pdf, 'favorite': False })
-    else:
-        pdfs = results
-
-    return render_template('pdfs.html', pdfs=pdfs, page=page, path=request.path)
-
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get('q')
-
-    print(query)
 
     if not query:
         redirect('/')
 
-    try:
-        page = abs(int(request.args.get('p')))
-    except:
-        page = 0
-
     query = query.lower()
     words = query.split()[:5] # max 5 words for querying
 
-    query = " ".join(words)
-
-    print(query)
+    results, process_time = get_pdfs_by_words(words)
 
     return ""
 
 
-@app.route('/research_paper/<pdfname>', methods=['GET'])
-def research_paper(pdfname):
-    result = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],filter={ 'column' : 'NAME', 'value' : pdfname})
+@app.route('/research_paper/<pdf_name>', methods=['GET'])
+def research_paper(pdf_name):
+    result, process_time = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],filter={ 'column' : 'NAME', 'value' : pdf_name})
     pdf = result[0]
 
     if (session.get('user')):
@@ -112,6 +121,23 @@ def research_paper(pdfname):
 
     return render_template('pdf.html', pdf=pdf)
 
+@app.route('/pdf/<pdf_name>')
+def send_pdf(pdf_name):
+    result, process_time = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],filter={ 'column' : 'NAME', 'value' : pdf_name})
+    pdf = result[0]
+
+    view_history = session['user']['view_history'].strip('][').split(', ')
+    if str(pdf['id']) in view_history:
+        view_history.remove(str(pdf['id']))
+    view_history.append(str(pdf['id']))
+    session['user'] = update_view_history(session['userid'], view_history)
+
+    print(os.path.join(app.root_path,'static',app.config['PDF_DIR']) + pdf_name)
+    return send_from_directory(os.path.join(app.root_path,'static',app.config['PDF_DIR']), pdf_name)
+
+@app.route('/bibtex/<pdf_name>')
+def bibtex(pdf_name):
+    return generate_bibtex(pdf_name)
 
 
 #api routes

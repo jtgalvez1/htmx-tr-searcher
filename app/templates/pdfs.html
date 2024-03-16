@@ -3,10 +3,16 @@
   {% for pdf in pdfs %}
   <div class="p-3">
     <a 
-    class="text-blue-600 text-lg font-bold hover:text-blue-800 visited:text-purple-600"
-    hx-get="/research_paper/{{ pdf['pdf_name'] }}" 
-    hx-target="#pdfs"
-    {# target="_blank" #}
+    {% if session.get('user') %}
+      class="text-blue-600 text-lg font-bold hover:text-blue-800 visited:text-purple-600"
+      {# hx-get="/research_paper/{{ pdf['name'] }}"  #}
+      {# hx-target="#pdfs" #}
+      href="/pdf/{{ pdf['name'] }}"
+      target="_blank"
+    {% else %}
+      class="text-lg font-bold cursor-default pointer-events-none"
+      style="color: var(--up-maroon);"
+    {% endif %}
     >
       {{ pdf['title'] }}
     </a>
@@ -38,12 +44,12 @@
         |
         {% endif %}
       {% endif %}
-      Published on {{ pdf['month'] }} {{ pdf['year'] }}, <a class="text-blue-600 hover:text-blue-800 visited:text-purple-600" href="/bibtext/{{ pdf['pdf_name'] }}" target="_blank">[BibTeX]</a>
+      Published on {{ pdf['month'] }} {{ pdf['year'] }}, <a class="text-blue-600 hover:text-blue-800 visited:text-purple-600" href="/bibtex/{{ pdf['pdf_name'] }}" target="_blank">[BibTeX]</a>
     </p>
   </div>
   <hr>
   {% endfor %}
-  <div hx-get="{{path}}?p={{page+1}}" hx-trigger="revealed" hx-swap="afterend"></div>
+  <div hx-get="{{path}}?p={{page+1}}{% if path == '/search' %}&q={{query}}{% endif %}" hx-trigger="revealed" hx-swap="afterend"></div>
 {% else %}
   <h1 class="text-xl pt-2">No more results.</h1>
 {% endif %}

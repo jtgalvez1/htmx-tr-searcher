@@ -7,6 +7,8 @@
     --font-color: #131313;
     --font2-color: #000;
 }
+
+html { overflow-x: hidden; }
   
 .hidden {
     display: none;

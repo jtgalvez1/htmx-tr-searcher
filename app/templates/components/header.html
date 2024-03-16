@@ -11,7 +11,7 @@
         relative"
 >
     <div class="w-screen lg:max-w-max px-4 flex justify-between items-center">
-        <h3 class="max-w-max  text-2xl lg:text-4xl font-bold">
+        <h3 class="max-w-max text-2xl lg:text-4xl font-bold">
             <a 
             style="color: var(--up-maroon);"
             href="/" 
@@ -19,8 +19,7 @@
             UPLB ICS Peak One
             </a>
         </h3>
-        <!-- <button id="menu-btn" onclick="document.querySelector('#sidebar').style.left = '0';"> -->
-        {%if session['user'] %}
+        {% if session['user'] %}
         <svg 
             class="h-12 lg:hidden"
             onclick="document.querySelector('#navbar').classList.toggle('hidden');"
@@ -55,23 +54,26 @@
             lg:shadow-none
     ">
         <a 
-          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" 
-          hx-get="/home"
-          hx-target="#pdfs"
+          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/' %} font-bold {% endif %}" 
+          href="/"
+          {# hx-get="/home"
+          hx-target="#pdfs" #}
         >
           Home
         </a>
         <a 
-          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" 
-          hx-get="/favorites"
-          hx-target="#pdfs"
+          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/favorites' %} font-bold {% endif %}" 
+          href="/favorites"
+          {# hx-get="/favorites"
+          hx-target="#pdfs" #}
         >
           Favorites
         </a>
         <a 
-          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0"
-          hx-get="/history"
-          hx-target="#pdfs"
+          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/history' %} font-bold {% endif %}"
+          href="/history"
+          {# hx-get="/history"
+          hx-target="#pdfs" #}
         >History</a>
         <a class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" href="/logout">Logout</a>
       </nav>

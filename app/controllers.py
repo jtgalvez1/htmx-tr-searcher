@@ -17,7 +17,7 @@ def db_execute(database, sql):
       conn.create_function('LOG', 1, math.log)
       cursor = conn.execute(sql)
 
-      if cursor.rowcount < 1:
+      if cursor.rowcount == 0:
         data['error'] = 'No results found.'
 
       for row in cursor:
@@ -36,110 +36,188 @@ def get_pdfs_from_db(fields,filter=None,pdf_list=None,limit=5,page=0):
   sql = f"SELECT {', '.join(fields)} FROM pdf"
   if filter is not None:
     sql = sql + f" WHERE {filter['column']} = '{filter['value']}'"
+
+  if pdf_list is not None:
+    sublist = list(reversed(pdf_list.strip('][').split(', ')))[page*limit:(page*limit)+limit]
+
+    if len(sublist) == 0:
+      return [], 0
+
+    # ORDER BY CASE so result will be in the same order of the list
+    i = 1
+    when_case = "CASE ID "
+    for id in sublist:
+      when_case += f" WHEN  {id} THEN {i} "
+      i += 1
+    when_case += " END"
+
+    if filter is None:
+      sql += " WHERE"
+    else:
+      sql += " AND"
+
+    sql += f" ID IN ({', '.join(sublist)}) ORDER BY {when_case}"
+  else:
+    sql += f" ORDER BY ID DESC LIMIT {limit} OFFSET {page*limit}"
   
+  start_time = time()
   data = db_execute('pdf.db', sql)
+  end_time = time()
 
   pdfs = []
-  if data['error'] is not None:
+  if data['error'] is None:
     for row in data['rows']:
       pdf = {}
       for i in range(0,len(fields)):
         pdf[fields[i].lower()] = row[i]
       pdfs.append(pdf)
 
-  # try:
-  #   with sqlite3.connect(app.config['DB_PATH'] + 'pdf.db') as conn:
-  #     cursor = conn.execute(f'SELECT {('?,' * len(fields))[:-1]}, ID FROM PDF ORDER BY ID DESC LIMIT {limit} OFFSET {page}', fields)
-      
-  #     if cursor.rowcount < 1:
-  #       data['error'] = 'No results found.'
+  return pdfs, end_time - start_time
 
-  #     for row in cursor:
-  #       data['rows'].append(row)
+def get_pdfs_by_words(words, limit=5, page=0):
+  nb_pdf = count_pdf()
 
-  #     conn.commit()
-  # except sqlite3.Error as e:
-  #   conn.rollback()
-  #   print(e)
-  #   data['error'] = e
-  # finally:
-  #   conn.close()
-
-  return pdfs
-
-def get_most_recents(limit=5, page=0):
+  pdfs = []
   sql = """
-    SELECT
-    NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT, ID
-    FROM PDF
-    ORDER BY ID DESC LIMIT {} OFFSET {}
-""".format(limit, page*limit)
+        SELECT A.PDF_ID, NAME, DATE, WORD, SUM(W_FREQ * LOG(TIDF)) * COUNT(WORD) AS SCORE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT
+        FROM (SELECT PDF_ID, WORD, W_FREQ
+              FROM FREQ
+              WHERE WORD IN ('{}')) A
+          INNER JOIN
+             (SELECT ID AS P2, WORD AS W2, {} / COUNT(ID) AS TIDF
+              FROM FREQ WHERE W2 IN ('{}')
+              GROUP BY W2) B ON A.WORD = B.W2
+          INNER JOIN
+             (SELECT ID, NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT
+              FROM PDF) C ON A.PDF_ID = C.ID
+        GROUP BY A.PDF_ID
+        ORDER BY SCORE DESC
+        LIMIT {} OFFSET {}
+      """.format("', '".join(words), str(float(nb_pdf)), "', '".join(words), limit, limit * page)
 
   start_time = time()
   data = db_execute('pdf.db', sql)
   end_time = time()
 
-  pdfs = []
-  if data['error'] is not None:
+  if data['error'] is None:
     for row in data['rows']:
       pdfs.append({
-        "pdf_name": row[0],
-        "date"    : format(datetime.fromtimestamp(row[1]), '%d/%m/%Y'),
-        "title"   : row[2],
-        "authors" : row[3],
-        "year"    : row[4],
-        "month"   : row[5],
-        "abstract": row[6],
-        "id"      : row[7],
-        "score"   : 0
+        "id"       : row[0],
+        "pdf_name" : row[1],
+        "date"     : format(datetime.fromtimestamp(row[2]), '%d/%m/%Y'),
+        "score"    : row[4] * 100,
+        "title"    : row[5],
+        "authors"  : row[6],
+        "year"     : row[7],
+        "month"    : row[8],
+        "abstract" : row[9]
       })
-
+  
   return pdfs, end_time - start_time
 
-def get_pdfs_from_list(pdf_list, limit=5, page=0):
+def count_pdf():
+    sql = "SELECT COUNT(*) FROM PDF"
+    data = db_execute('pdf.db', sql)
+    return int(data['rows'][0][0])
+  
+# def get_most_recents(limit=5, page=0):
+#   sql = """
+#     SELECT
+#     NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT, ID
+#     FROM PDF
+#     ORDER BY ID DESC LIMIT {} OFFSET {}
+# """.format(limit, page*limit)
 
-  # ORDER BY CASE so result will be in the same order of the list
-  i = 1
-  when_case = ""
-  for id in pdf_list.strip('][').split(', '):
-    when_case = when_case + f" WHEN  {id} THEN {i} "
-    i += 1
+#   start_time = time()
+#   data = db_execute('pdf.db', sql)
+#   end_time = time()
 
-  sql = """
-    SELECT
-    NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT, ID
-    FROM PDF
-    WHERE ID IN ({})
-    ORDER BY CASE ID {} END DESC LIMIT {} OFFSET {}
-""".format(pdf_list[1:-1], when_case, limit, page*limit)
+#   pdfs = []
+#   if data['error'] is None:
+#     for row in data['rows']:
+#       pdfs.append({
+#         "pdf_name": row[0],
+#         "date"    : format(datetime.fromtimestamp(row[1]), '%d/%m/%Y'),
+#         "title"   : row[2],
+#         "authors" : row[3],
+#         "year"    : row[4],
+#         "month"   : row[5],
+#         "abstract": row[6],
+#         "id"      : row[7],
+#         "score"   : 0
+#       })
 
-  start_time = time()
-  data = db_execute('pdf.db', sql)
-  end_time = time()
+#   return pdfs, end_time - start_time
 
-  pdfs = []
-  if data['error'] is not None:
-    for row in data['rows']:
-      pdfs.append({
-        "pdf_name": row[0],
-        "date"    : format(datetime.fromtimestamp(row[1]), '%d/%m/%Y'),
-        "title"   : row[2],
-        "authors" : row[3],
-        "year"    : row[4],
-        "month"   : row[5],
-        "abstract": row[6],
-        "id"      : row[7],
-        "score"   : 0
-      })
+# def get_pdfs_from_list(pdf_list, limit=5, page=0):
 
-  return pdfs, end_time - start_time
+#   sublist = list(reversed(pdf_list.strip('][').split(', ')))[page*limit:(page*limit)+limit]
+
+#   # ORDER BY CASE so result will be in the same order of the list
+#   i = 1
+#   when_case = "CASE ID "
+#   for id in sublist:
+#     when_case += f" WHEN  {id} THEN {i} "
+#     i += 1
+#   when_case += " END"
+
+#   sql = """
+#     SELECT
+#     NAME, DATE, TITLE, AUTHORS, YEAR, MONTH, ABSTRACT, ID
+#     FROM PDF
+#     WHERE ID IN ({})
+#     ORDER BY {}
+# """.format(', '.join(sublist), when_case, limit, page*limit)
+
+#   start_time = time()
+#   data = db_execute('pdf.db', sql)
+#   end_time = time()
+
+#   pdfs = []
+#   if data['error'] is None:
+#     for row in data['rows']:
+#       pdfs.append({
+#         "pdf_name": row[0],
+#         "date"    : format(datetime.fromtimestamp(row[1]), '%d/%m/%Y'),
+#         "title"   : row[2],
+#         "authors" : row[3],
+#         "year"    : row[4],
+#         "month"   : row[5],
+#         "abstract": row[6],
+#         "id"      : row[7],
+#         "score"   : 0
+#       })
+
+#   return pdfs, end_time - start_time
+
+def generate_bibtex(pdf_name):
+  # conn = conn_to_db('pdf.db')
+  # cursor = conn.execute("SELECT TITLE, AUTHORS, YEAR FROM PDF WHERE NAME='"+pdf_name+"'")
+
+  sql = "SELECT TITLE, AUTHORS, YEAR FROM PDF WHERE NAME='"+pdf_name+"'"
+
+  data = db_execute('pdf.db',sql)
+  
+  #fields = pdf_name.split("_")
+  #cite_key=fields[len(fields)-1].split(".")[0]
+
+  if data['error'] is None:
+    for row in data['rows']: 
+        fields = row[1].split(",")
+        temp1=fields[0].split(" ")
+        temp2=temp1[len(temp1)-1]
+        temp3=row[0].split(" ")
+        cite_key = temp2+row[2]+temp3[0]
+        retval = "@techreport{"+cite_key+", title={"+row[0]+"}, author={" +row[1].replace(","," and ")+" }, year={"+row[2]+"}, institution={"+app.config['INSTITUTION']+"}, type={"+app.config['RESEARCH_GROUP']+" Technical Reports}}"
+
+  return retval
 
 
 
 def get_user_by_id(userid):
   sql = "SELECT userid, email, given_name, family_name, picture, allow_upload, allow_delete, view_history, saved_trs, user_type FROM USERS WHERE userid = '{}'".format(userid)
   data = db_execute('users.db',sql)
-  if data['error'] is not None:
+  if data['error'] is None:
     user = {
       "email"         : data['rows'][0][1],
       "given_name"    : data['rows'][0][2],
