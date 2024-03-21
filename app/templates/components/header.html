@@ -33,50 +33,53 @@
             </g>
         </svg>
         {% endif %}
-        <!-- </button> -->
     </div>
     {% if session['user'] %}
-      <nav 
-        id="navbar"
-        class="
-            max-w-max
-            bg-white
-            flex 
-            flex-col
-            lg:flex-row
-            items-center
-            absolute
-            top-20
-            lg:static
-            hidden
-            lg:block
-            shadow-lg
-            lg:shadow-none
-    ">
-        <a 
-          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/' %} font-bold {% endif %}" 
-          href="/"
-          {# hx-get="/home"
-          hx-target="#pdfs" #}
-        >
-          Home
-        </a>
-        <a 
-          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/favorites' %} font-bold {% endif %}" 
-          href="/favorites"
-          {# hx-get="/favorites"
-          hx-target="#pdfs" #}
-        >
-          Favorites
-        </a>
-        <a 
-          class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/history' %} font-bold {% endif %}"
-          href="/history"
-          {# hx-get="/history"
-          hx-target="#pdfs" #}
-        >History</a>
-        <a class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" href="/logout">Logout</a>
-      </nav>
+        <nav 
+          id="navbar"
+          class="
+              max-w-max
+              py-2
+              bg-white
+              flex 
+              flex-col
+              lg:flex-row
+              items-center
+              absolute
+              top-20
+              lg:static
+              hidden
+              lg:block
+              shadow-lg
+              lg:shadow-none
+      ">
+          <a 
+            class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/' %} font-bold {% endif %}" 
+            href="/"
+            {# hx-get="/home"
+            hx-target="#pdfs" #}
+          >
+            Home
+          </a>
+          <a 
+            class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/favorites' %} font-bold {% endif %}" 
+            href="/favorites"
+            {# hx-get="/favorites"
+            hx-target="#pdfs" #}
+          >
+            Favorites
+          </a>
+          <a 
+            class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0 {% if path == '/history' %} font-bold {% endif %}"
+            href="/history"
+            {# hx-get="/history"
+            hx-target="#pdfs" #}
+          >History</a>
+          <a class="w-screen lg:max-w-max p-2 lg:p-6 cursor-pointer border lg:border-0" href="/logout">Logout</a>
+          {% if session['user']['allow_upload'] == 1 %}
+            <a href="/upload" class="hidden lg:inline mx-2 p-2 px-4 text-white font-bold" style="background-color: var(--forest-green);">Upload</a>
+          {% endif %}
+        </nav>
     {% else %}
       <!-- 'Sign in with Google' button -->
       <script src="https://accounts.google.com/gsi/client" async defer></script>

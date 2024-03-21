@@ -49,7 +49,14 @@
   </div>
   <hr>
   {% endfor %}
-  <div hx-get="{{path}}?p={{page+1}}{% if path == '/search' %}&q={{query}}{% endif %}" hx-trigger="revealed" hx-swap="afterend"></div>
+  <h1 
+    class="text-xl pt-2" 
+    hx-get="{{path}}?p={{page+1}}{% if path == '/search' %}&q={{query}}{% endif %}" 
+    hx-trigger="revealed" 
+    hx-swap="outerHTML"
+  >
+    Scroll down for more &darr;
+  </h1>
 {% else %}
   <h1 class="text-xl pt-2">No more results.</h1>
 {% endif %}

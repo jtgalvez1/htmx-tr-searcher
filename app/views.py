@@ -7,7 +7,6 @@ from .oauth import *
 
 @app.before_request
 def prereq():
-    print(request.path)
     USER_REQUIRED = ['/favorites', '/history', '/pdf', '/api']
     if (session.get('user') is None and request.path.startswith(tuple(USER_REQUIRED))):
         return redirect('/')
@@ -88,25 +87,6 @@ def index():
         res.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups')
         return res
 
-@app.route('/search', methods=['GET'])
-def search():
-    query = request.args.get('q')
-    try:
-        page = abs(int(request.args.get('p')))
-    except:
-        page = 0
-
-    if not query:
-        redirect('/')
-
-    query = query.lower()
-    words = query.split()[:5] # max 5 words for querying
-
-    results, process_time = get_pdfs_by_words(words)
-
-    return ""
-
-
 @app.route('/research_paper/<pdf_name>', methods=['GET'])
 def research_paper(pdf_name):
     result, process_time = get_pdfs_from_db(fields=['ID', 'NAME', 'TITLE', 'AUTHORS', 'ABSTRACT', 'INDEX_TERMS', 'YEAR', 'MONTH'],filter={ 'column' : 'NAME', 'value' : pdf_name})
@@ -139,6 +119,11 @@ def send_pdf(pdf_name):
 def bibtex(pdf_name):
     return generate_bibtex(pdf_name)
 
+@app.route('/upload', methods=['GET'])
+def upload_page():
+    return render_template('upload.html')
+
+
 
 #api routes
 @app.route('/api/favorite/<pdfid>', methods=['PUT'])
@@ -155,6 +140,13 @@ def save_tr(pdfid):
 
     return output
 
+@app.route('/api/pdf', methods=['POST'])
+def upload_paper():
+    return
+
+@app.route('/api/pdf/process', methods=['POST'])
+def process_pdf():
+    return
 
 
 #auth routes

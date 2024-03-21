@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" class="w-screen">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static',filename='images/favicon.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
+  <title>Upload | UPLB ICS PeakOne</title>
+</head>
+<body class="min-h-screen flex flex-col">
+  {% include 'components/header.html' %}
+  <main id="main" class="p-8 lg:px-48">
+    <form
+        class="w-100 lg:w-1/2 m-auto grid grid-cols-1"
+        hx-post="/api/pdf"
+    >
+        <h1 class="mb-2 text-2xl">Add Research Paper</h1>
+
+        <label for="title">Title:</label>
+        <input class="mb-2 p-2" type="text" name="title" id="title" placeholder="Enter title here" required>
+
+        <label for="authors">Authors:</label>
+        <input class="mb-2 p-2" type="text" name="authors" id="authors" placeholder="Enter authors here ( comma separated )" required>
+
+        <label for="abstract">Abstract:</label>
+        <textarea class="mb-2 p-2" name="abstract" id="abstract" cols="30" rows="5" placeholder="Enter abstract here"></textarea>
+
+        <label for="index_terms">Index Terms:</label>
+        <input class="mb-2 p-2" type="text" name="index_terms" id="index_terms" placeholder="Enter index terms here ( comma separated )">
+
+        <label for="month">Publication Month:</label>
+        <input class="mb-2 p-2" type="month" name="month" id="month" required>
+
+        <label class="mx-auto p-2 text-white font-black" style="background-color: var(--forest-green);" for="file">Upload PDF</label>
+        <input class="hidden" type="file" name="file" id="file" accept="application/pdf" />
+    </form>
+  </main>
+  {% include 'components/footer.html' %}
+
+    <script>
+        window.addEventListener('load', function() {
+            const currMonth = `${new Date().getFullYear()}-${new Date().getMonth() < 10 ? '0' + new Date().getMonth() : new Date().getMonth()}`
+            document.querySelector('#month').value = currMonth;
+        })  
+    </script>
+</body>
+</html>
